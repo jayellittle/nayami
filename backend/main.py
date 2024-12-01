@@ -51,7 +51,7 @@ async def create_post(post: Post):
         "hashtags": cleaned_hashtags,
         "timestamp": {'.sv': 'timestamp'}
     }
-    posts_ref.push(new_post)
+    posts_ref.push().set(new_post)
     return {"status": "success"}
 
 
@@ -62,7 +62,8 @@ async def get_posts(
     sort_by: SortField | None = SortField.TIMESTAMP,
     direction: SortDirection | None = SortDirection.DESC
 ):
-    results = posts_ref.order_by_child(sort_by.value).get()
+    sort_field = sort_by.value if sort_by else SortField.TIMESTAMP.value
+    results = posts_ref.order_by_child(sort_field).get()
 
     if results:
         posts = dict(results)
@@ -70,10 +71,10 @@ async def get_posts(
         # Filter by category if specified
         if category:
             posts = {
-                k: v for k, v in posts.items() 
+                k: v for k, v in posts.items()
                 if category.value in v.get('categories', [])
             }
-        
+
         # Filter by hashtag if specified
         if hashtag:
             clean_hashtag = hashtag.lower().strip().replace('#', '')
@@ -88,5 +89,5 @@ async def get_posts(
         else:
             posts = dict(sorted(posts.items(), reverse=True))
         return posts
-        
+
     return {}
