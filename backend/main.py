@@ -26,6 +26,7 @@ class Post(BaseModel):
     title: str
     body: str
     categories: List[CategoryEnum]
+    hashtags: List[str]
 
 class SortField(str, Enum):
     TIMESTAMP = "timestamp"
@@ -38,10 +39,16 @@ class SortDirection(str, Enum):
 
 @app.post("/posts")
 async def create_post(post: Post):
+    cleaned_hashtags = [
+        tag.lower().strip().replace('#', '')
+        for tag in post.hashtags
+    ]
+
     new_post = {
         "title": post.title,
         "body": post.body,
         "categories": [cat.value for cat in post.categories],
+        "hashtags": cleaned_hashtags,
         "timestamp": {'.sv': 'timestamp'}
     }
     posts_ref.push(new_post)
@@ -50,19 +57,32 @@ async def create_post(post: Post):
 
 @app.get("/posts")
 async def get_posts(
+    hashtag: Optional[str] = None,
     category: Optional[CategoryEnum] = None,
     sort_by: Optional[SortField] = SortField.TIMESTAMP,
     direction: Optional[SortDirection] = SortDirection.DESC
 ):
     results = posts_ref.order_by_child(sort_by.value).get()
+
     if results:
         posts = dict(results)
+
+        # Filter by category if specified
         if category:
             posts = {
                 k: v for k, v in posts.items() 
                 if category.value in v.get('categories', [])
             }
+        
+        # Filter by hashtag if specified
+        if hashtag:
+            clean_hashtag = hashtag.lower().strip().replace('#', '')
+            posts = {
+                k: v for k, v in posts.items()
+                if clean_hashtag in v.get('hashtags', [])
+            }
 
+        # Apply sorting
         if direction == SortDirection.ASC:
             posts = dict(sorted(posts.items()))
         else:
