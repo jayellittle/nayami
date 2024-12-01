@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from database import posts_ref
 from pydantic import BaseModel
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 
 app = FastAPI()
@@ -57,10 +57,10 @@ async def create_post(post: Post):
 
 @app.get("/posts")
 async def get_posts(
-    hashtag: Optional[str] = None,
-    category: Optional[CategoryEnum] = None,
-    sort_by: Optional[SortField] = SortField.TIMESTAMP,
-    direction: Optional[SortDirection] = SortDirection.DESC
+    hashtag: str | None = None,
+    category: CategoryEnum | None = None,
+    sort_by: SortField | None = SortField.TIMESTAMP,
+    direction: SortDirection | None = SortDirection.DESC
 ):
     results = posts_ref.order_by_child(sort_by.value).get()
 
