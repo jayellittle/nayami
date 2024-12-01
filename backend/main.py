@@ -14,12 +14,14 @@ async def read_index():
     return FileResponse("../frontend/index.html")
 
 class Post(BaseModel):
-    content: str
+    title: str
+    body: str
 
 @app.post("/posts")
 async def create_post(post: Post):
     new_post = {
-        "content": post.content,
+        "title": post.title,
+        "body": post.body,
         "timestamp": {'.sv': 'timestamp'}
     }
     posts_ref.push(new_post)
